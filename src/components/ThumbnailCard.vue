@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { getThumbnailUrl } from "../api";
 import type { Photo } from "../types";
 
-// Bounded cache for thumbnail URLs — evicts oldest entries at capacity
+// Bounded cache for thumbnail URLs
 const MAX_CACHE_SIZE = 10000;
 const urlCache = new Map<string, string>();
 
@@ -24,21 +24,13 @@ const props = defineProps<{
   photo: Photo;
 }>();
 
-const thumbSrc = ref<string>("");
+const thumbSrc = ref("");
 const loaded = ref(false);
 const error = ref(false);
 
 onMounted(() => {
   thumbSrc.value = getCachedUrl(props.photo.thumbnail_path);
 });
-
-function onImgLoad() {
-  loaded.value = true;
-}
-
-function onImgError() {
-  error.value = true;
-}
 </script>
 
 <template>
@@ -51,10 +43,11 @@ function onImgError() {
       class="thumb-img"
       :class="{ visible: loaded }"
       loading="lazy"
-      @load="onImgLoad"
-      @error="onImgError"
+      @load="loaded = true"
+      @error="error = true"
     />
     <div v-if="error" class="thumb-error">!</div>
+    <div v-if="photo.favorite" class="thumb-fav">★</div>
     <div class="thumb-name">{{ photo.filename }}</div>
   </div>
 </template>
@@ -111,6 +104,15 @@ function onImgError() {
   justify-content: center;
   color: #f55;
   font-size: 2rem;
+}
+
+.thumb-fav {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #ffb74d;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .thumb-name {
